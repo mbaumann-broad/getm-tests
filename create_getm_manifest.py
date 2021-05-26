@@ -148,13 +148,13 @@ class ManifestGenerator:
             'checksum-algorithm': 'md5',
             'filepath': self.create_filepath(drs_uri, martha_response['fileName'])
         }
-        print(f"manifest_entry={json.dumps(manifest_entry, indent=4)}")
         return manifest_entry
 
     def resolve_to_manifest_entry(self, drs_uri: str) -> dict:
         martha = MockMartha()
         martha_response = martha.resolve(drs_uri)
         manifest_entry = self.convert_martha_response_to_manifest_entry(drs_uri, martha_response)
+        print(f"manifest_entry={json.dumps(manifest_entry, indent=4)}")
         return manifest_entry
 
     def resolve_all_to_manifest_json(self, drs_uris: list) -> list:
@@ -183,5 +183,3 @@ print(f"drs_uri_list={drs_uri_list}")
 terra_user_token = None
 manifest_generator = ManifestGenerator()
 manifest_generator.create_manifest(manifest_filename, drs_uri_list)
-
-print("Done!")
