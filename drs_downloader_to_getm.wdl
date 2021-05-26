@@ -84,7 +84,10 @@ task download {
         cat ~{getm_manifest}
 
         # Download the files in the manifest
-        getm --manifest ~{getm_manifest}
+        time getm -vv --manifest ~{getm_manifest}
+
+        # TODO Iterate over the manifest listing each file
+        ls -lr /cromwell_root/
 
     >>>
 
@@ -94,7 +97,6 @@ task download {
     }
 
     runtime {
-        # docker: "ubuntu:bionic"
         docker: "broadinstitute/cromwell-drs-localizer:61"
         cpu: select_first([cpu, "4"])
         memory: select_first([memory,"16"]) + " GB"
