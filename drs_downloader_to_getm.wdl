@@ -43,35 +43,49 @@ task download {
     command <<<
         set -ux
 
+        #
+        # Identify the runtime environment
+        #
+
+        # Check Linux version
+        cat /etc/issue
+        uname -a
+
+        # Check available shared memory
+        df -h
+
+        #
+        # Commands that could be added to the Dockerfile
+        #
+
         apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget
 
         apt-get -yq --no-install-recommends install python3-pip \
            && python3 -m pip install --upgrade pip
 
-        # Diagnostic: Check Linux version
-        cat /etc/issue
-        uname -a
+        # TODO Configure shared memory appropriately, if needed.
 
-        # Diagnostic: Check available shared memory
-        df -h
+        # Install getm
+        pip3 install git+https://github.com/xbrianh/getm
+        pip3 show getm
+
+        #
+        # DRS URI download processing
+        #
 
         # Debug: Output the lists of image_files
         echo drs_uris: "~{sep='", "' drs_uris}"
 
-        # Install getm!
-        pip3 install git+https://github.com/xbrianh/getm
-        pip3 show getm
-
+        # Create a getm manifest for the DRS URIs
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/create_getm_manifest.py
-
         python3 ./create_getm_manifest.py ~{getm_manifest} "~{sep='" "' drs_uris}"
 
-        touch ~{getm_manifest}
-
-        # Debug: Output the contents of the manifest file
+        # Debug: Output the contents of the getm manifest file
         cat ~{getm_manifest}
 
+        # Download the files in the manifest
         getm --manifest ~{getm_manifest}
+
     >>>
 
     output {
