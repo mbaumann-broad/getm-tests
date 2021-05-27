@@ -41,7 +41,7 @@ task download {
         String getm_manifest = "./manifest.json"
     }
     command <<<
-        set -ux
+        set -eux o pipefail
 
         #
         # Identify the runtime environment
