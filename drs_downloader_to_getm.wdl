@@ -84,7 +84,11 @@ task download {
         cat ~{getm_manifest_filename}
 
         # Download the files in the manifest
+        start_time=`date +%s`
         time getm -v --manifest ~{getm_manifest_filename}
+        getm_exit_status=$?
+        echo "Getm exit status: "$getm_exit_status
+        end_time=`date +%s`
 
         # TODO Iterate over the manifest listing each file
         ls -lR /cromwell_root/
