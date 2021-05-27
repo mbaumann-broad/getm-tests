@@ -94,7 +94,8 @@ class MockMartha:
         resp = requests.get(f"https://{self.drs_server_hostname}/ga4gh/drs/v1/objects/{object_id}/access/{access_id}",
                             headers=headers)
         print(f"Request URL: {resp.request.url}")
-        print(resp.text)
+        if resp.status_code != 200:
+            print(resp.text)
         resp.raise_for_status()
         return resp.json()
 
@@ -118,8 +119,6 @@ class MockMartha:
         drs_access_id = self.get_drs_access_id(drs_metadata)
         fence_user_token = BondProxy().get_fence_token(self.bond_provider, GoogleAuth().get_terra_user_token())
         drs_access_response = self.get_gen3_drs_access(fence_user_token, drs_uri, drs_access_id)
-        print(f"drs_metadata = {json.dumps(drs_metadata, indent=4)}")
-        print(f"drs_access_response = {json.dumps(drs_access_response, indent=4)}")
         martha_response = dict(accessUrl=drs_access_response,
                                bondProvider=self.bond_provider,
                                bucket=None, # Not needed
@@ -132,7 +131,6 @@ class MockMartha:
                                size=drs_metadata['size'],
                                timeCreated=drs_metadata['created_time'],
                                timeUpdated=drs_metadata['updated_time'])
-        print(f"martha_response={json.dumps(martha_response, indent=4)}")
         return martha_response
 
 
@@ -158,7 +156,7 @@ class ManifestGenerator:
         martha = MockMartha()
         martha_response = martha.resolve(drs_uri)
         manifest_entry = self.convert_martha_response_to_manifest_entry(drs_uri, martha_response)
-        print(f"manifest_entry={json.dumps(manifest_entry, indent=4)}")
+        # print(f"manifest_entry={json.dumps(manifest_entry, indent=4)}")
         return manifest_entry
 
     def resolve_all_to_manifest_json(self, drs_uris: list) -> list:
