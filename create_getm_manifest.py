@@ -156,7 +156,8 @@ class ManifestGenerator:
             'url': martha_response['accessUrl']['url'],
             'checksum': martha_response['hashes']['md5'],
             'checksum-algorithm': 'md5',
-            'filepath': self.create_filepath(drs_uri, martha_response['fileName'])
+            'filepath': self.create_filepath(drs_uri, martha_response['fileName']),
+            'file_size': martha_response['size']
         }
         return manifest_entry
 
