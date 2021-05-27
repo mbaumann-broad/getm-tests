@@ -100,7 +100,7 @@ task download {
 
     output {
         File stdout = stdout()
-        File getm_manifest = ~{getm_manifest_filename}
+        File getm_manifest = getm_manifest_filename
     }
 
     runtime {
