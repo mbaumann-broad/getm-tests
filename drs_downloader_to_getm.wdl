@@ -84,10 +84,10 @@ task download {
         cat ~{getm_manifest}
 
         # Download the files in the manifest
-        time getm -vv --manifest ~{getm_manifest}
+        time getm -v --manifest ~{getm_manifest}
 
         # TODO Iterate over the manifest listing each file
-        ls -lr /cromwell_root/
+        ls -lR /cromwell_root/
 
     >>>
 
