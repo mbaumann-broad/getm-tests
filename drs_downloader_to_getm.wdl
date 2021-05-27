@@ -51,9 +51,6 @@ task download {
         cat /etc/issue
         uname -a
 
-        # Check available shared memory
-        df -h
-
         #
         # Commands that could be added to the Dockerfile
         #
@@ -63,8 +60,6 @@ task download {
         apt-get -yq --no-install-recommends install python3-pip \
            && python3 -m pip install --upgrade pip
 
-        # TODO Configure shared memory appropriately, if needed.
-
         # Install getm
         pip3 install git+https://github.com/xbrianh/getm
         pip3 show getm
@@ -72,6 +67,11 @@ task download {
         #
         # DRS URI download processing
         #
+
+        # Check available shared memory and disk usage before downloading
+        df -h
+
+        # TODO Configure shared memory appropriately, if needed.
 
         # Debug: Output the lists of image_files
         echo drs_uris: "~{sep='", "' drs_uris}"
@@ -88,6 +88,9 @@ task download {
 
         # TODO Iterate over the manifest listing each file
         ls -lR /cromwell_root/
+
+        # Check final disk usage after downloading
+        df -h
 
     >>>
 
