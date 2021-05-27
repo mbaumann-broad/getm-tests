@@ -1,20 +1,5 @@
 version 1.0
 workflow getm_drs_downloader {
-    input {
-        Array[String] drs_uris
-        Int? cpu
-        Int? memory
-        Int? boot_disk
-        Int? disk
-    }
-    call download {
-        input:
-            drs_uris=drs_uris
-    }
-    output {
-        File stdout = download.stdout
-        File getm_manifest = download.getm_manifest
-    }
     meta {
         description: "This workflow tests downloading DRS URIs using getm"
         tags: "DRS"
@@ -22,15 +7,30 @@ workflow getm_drs_downloader {
     }
     parameter_meta {
         drs_uris: "Array of DRS URIs to be downloaded"
-        cpu: "runtime parameter - number of CPUs "
-        memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
-        boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
-        disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
-
+    }
+    input {
+        Array[String] drs_uris
+    }
+    call download {
+        input: drs_uris=drs_uris
+    }
+    output {
+        File stdout = download.stdout
+        File getm_manifest = download.getm_manifest
     }
 }
 
 task download {
+    meta {
+        description: "This task tests downloading DRS URIs using getm"
+    }
+    parameter_meta {
+        drs_uris: "Array of DRS URIs to be downloaded"
+        cpu: "runtime parameter - number of CPUs "
+        memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
+        boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
+        disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
+    }
     input {
         Array[String] drs_uris
         Int? cpu
@@ -85,7 +85,7 @@ task download {
 
         # Download the files in the manifest
         start_time=`date +%s`
-        time getm -v --manifest ~{getm_manifest_filename}
+        time getm -c -v --manifest ~{getm_manifest_filename}
         getm_exit_status=$?
         echo "Getm exit status: "$getm_exit_status
         end_time=`date +%s`
