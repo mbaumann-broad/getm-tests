@@ -59,6 +59,14 @@ class MockMartha:
             self.drs_server_hostname = "gen3.biodatacatalyst.nhlbi.nih.gov"
             self.drs_access_type = "gs"
             self.bond_provider = "fence"
+        elif drs_uri.startswith("drs://dg.ANV0"):
+            self.drs_server_hostname = "gen3.theanvil.io"
+            self.drs_access_type = "gs"
+            self.bond_provider = "anvil"
+        elif drs_uri.startswith("drs://dg.4DFC"):
+            self.drs_server_hostname = "nci-crdc.datacommons.io"
+            self.drs_access_type = "gs"
+            self.bond_provider = "dcf-fence"
         else:
             raise NotImplementedError(f"Support for this DRS URI has not yet been implemented: {drs_uri}")
 
