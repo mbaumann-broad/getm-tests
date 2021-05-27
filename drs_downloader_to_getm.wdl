@@ -38,7 +38,7 @@ task download {
         Int? boot_disk
         Int? disk
 
-        String getm_manifest = "./manifest.json"
+        String getm_manifest_filename = "./manifest.json"
     }
     command <<<
         set -eux o pipefail
@@ -78,13 +78,13 @@ task download {
 
         # Create a getm manifest for the DRS URIs
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/create_getm_manifest.py
-        python3 ./create_getm_manifest.py ~{getm_manifest} "~{sep='" "' drs_uris}"
+        python3 ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
 
         # Debug: Output the contents of the getm manifest file
-        cat ~{getm_manifest}
+        cat ~{getm_manifest_filename}
 
         # Download the files in the manifest
-        time getm -v --manifest ~{getm_manifest}
+        time getm -v --manifest ~{getm_manifest_filename}
 
         # TODO Iterate over the manifest listing each file
         ls -lR /cromwell_root/
@@ -96,7 +96,7 @@ task download {
 
     output {
         File stdout = stdout()
-        File getm_manifest = getm_manifest
+        File getm_manifest = ~{getm_manifest_filename}
     }
 
     runtime {
