@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 from subprocess import Popen, PIPE
 import json
@@ -139,6 +140,9 @@ class ManifestGenerator:
 
     def create_filepath(self, drs_uri: str, filename: str) -> str:
         drs_uri_portion = drs_uri.replace("drs://","").replace(":","_").replace('/',"_")
+        # TODO Temporary workaround for `getm` not currently creating subdirectories as needed
+        os.mkdir(f"/cromwell_root/{drs_uri_portion}")
+        # End of workaround
         return f"/cromwell_root/{drs_uri_portion}/{filename}"
 
     def convert_martha_response_to_manifest_entry(self, drs_uri: str, martha_response: dict) -> dict:
