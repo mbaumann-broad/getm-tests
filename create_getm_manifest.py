@@ -47,6 +47,16 @@ class BondProxy:
         resp.raise_for_status()
         return resp.json().get('token')
 
+    def get_service_account_key(self, bond_provider: str, terra_user_token: str) -> str:
+        headers = {
+            'authorization': f"Bearer {terra_user_token}",
+            'content-type': "application/json"
+        }
+        resp = requests.get(f"https://{self.bond_hostname}/api/link/v1/{bond_provider}/serviceaccount/key", headers=headers)
+        print(f"Request URL: {resp.request.url}")
+        resp.raise_for_status()
+        return resp.json().get('data')
+
 
 class MockMartha:
     def __init__(self):
@@ -107,6 +117,13 @@ class MockMartha:
         resp.raise_for_status()
         return resp.json()
 
+    def get_gs_uri(self, drs_metadata: dict) -> str:
+        for access_method in drs_metadata['access_methods']:
+            url = access_method['access_url']['url']
+            if url.startswith("gs://"):
+                return url
+        return None
+
     def get_filename(self, url: str) -> str:
         from pathlib import Path
         from urllib.parse import urlparse
@@ -126,14 +143,15 @@ class MockMartha:
         drs_metadata = self.get_drs_metadata(drs_uri)
         drs_access_id = self.get_drs_access_id(drs_metadata)
         fence_user_token = BondProxy().get_fence_token(self.bond_provider, GoogleAuth().get_terra_user_token())
+        service_account_key = BondProxy().get_service_account_key(self.bond_provider, GoogleAuth().get_terra_user_token())
         drs_access_response = self.get_gen3_drs_access(fence_user_token, drs_uri, drs_access_id)
         martha_response = dict(accessUrl=drs_access_response,
                                bondProvider=self.bond_provider,
                                bucket=None, # Not needed
                                contentType=None, # Not needed
                                fileName=self.get_filename(drs_access_response['url']),
-                               googleServiceAccount=None, # Not needed
-                               gsUri=None, # Not needed
+                               googleServiceAccount=service_account_key,
+                               gsUri=self.get_gs_uri(drs_metadata),
                                hashes=self.format_drs_checksums_as_object(drs_metadata['checksums']),
                                name=drs_metadata['name'],
                                size=drs_metadata['size'],
@@ -157,7 +175,10 @@ class ManifestGenerator:
             'checksum': martha_response['hashes']['md5'],
             'checksum-algorithm': 'md5',
             'filepath': self.create_filepath(drs_uri, martha_response['fileName']),
-            'file_size': martha_response['size']
+            # Additional fields to facilitate testing
+            'file_size': martha_response['size'],
+            'gsUri': martha_response['gsUri'],
+            'googleServiceAccount': martha_response['googleServiceAccount']
         }
         return manifest_entry
 
@@ -179,10 +200,24 @@ class ManifestGenerator:
         with open(manifest_filename, "w") as fh:
             fh.write(json.dumps(manifest_content, indent=4))
 
+    def print_manifest(self, manifest_content: list) -> None:
+        """
+        Output the manifest for informational/diagnostic purposes,
+        with the Google service account key masked.
+        """
+        print("Manifest Content:")
+        print("[")
+        for manifest_entry in manifest_content:
+            entry = manifest_entry.copy()
+            if entry.get('googleServiceAccount', None) is not None:
+                entry['googleServiceAccount'] = "MASKED"
+            print(json.dumps(entry, indent=4))
+        print("]")
+
     def create_manifest(self, manifest_filename: str, drs_uri_list: list):
         manifest_content = self.resolve_all_to_manifest_json(drs_uri_list)
         self.write_manifest(manifest_filename, manifest_content)
-
+        self.print_manifest(manifest_content)
 
 # Main
 assert len(sys.argv) >= 3, "Usage: create_getm_manifest.py manifest_filename drs_uri [drs_uri ...]"
