@@ -80,9 +80,6 @@ task download {
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/create_getm_manifest.py
         python3 ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
 
-        # Debug: Output the contents of the getm manifest file
-        cat ~{getm_manifest_filename}
-
         # Download the files in the manifest
         start_time=`date +%s`
         time getm -c -v --manifest ~{getm_manifest_filename}
