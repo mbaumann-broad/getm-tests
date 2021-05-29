@@ -52,7 +52,8 @@ class BondProxy:
             'authorization': f"Bearer {terra_user_token}",
             'content-type': "application/json"
         }
-        resp = requests.get(f"https://{self.bond_hostname}/api/link/v1/{bond_provider}/serviceaccount/key", headers=headers)
+        resp = requests.get(f"https://{self.bond_hostname}/api/link/v1/{bond_provider}/serviceaccount/key",
+                            headers=headers)
         print(f"Request URL: {resp.request.url}")
         resp.raise_for_status()
         return resp.json().get('data')
@@ -147,8 +148,8 @@ class MockMartha:
         drs_access_response = self.get_gen3_drs_access(fence_user_token, drs_uri, drs_access_id)
         martha_response = dict(accessUrl=drs_access_response,
                                bondProvider=self.bond_provider,
-                               bucket=None, # Not needed
-                               contentType=None, # Not needed
+                               bucket=None,  # Not needed
+                               contentType=None,  # Not needed
                                fileName=self.get_filename(drs_access_response['url']),
                                googleServiceAccount=service_account_key,
                                gsUri=self.get_gs_uri(drs_metadata),
@@ -177,8 +178,8 @@ class ManifestGenerator:
             'filepath': self.create_filepath(drs_uri, martha_response['fileName']),
             # Additional fields to facilitate testing
             'file_size': martha_response['size'],
-            'drsUri': drs_uri,
-            'gsUri': martha_response['gsUri']
+            'drs_uri': drs_uri,
+            'gs_uri': martha_response['gsUri']
         }
         return manifest_entry
 
