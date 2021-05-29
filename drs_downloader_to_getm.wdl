@@ -77,7 +77,7 @@ task download {
         echo drs_uris: "~{sep='", "' drs_uris}"
 
         # Create a getm manifest for the DRS URIs
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/create_getm_manifest.py
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         python3 ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
 
         # Download the files in the manifest
