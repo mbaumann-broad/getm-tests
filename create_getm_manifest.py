@@ -177,8 +177,8 @@ class ManifestGenerator:
             'filepath': self.create_filepath(drs_uri, martha_response['fileName']),
             # Additional fields to facilitate testing
             'file_size': martha_response['size'],
-            'gsUri': martha_response['gsUri'],
-            'googleServiceAccount': martha_response['googleServiceAccount']
+            'drsUri': drs_uri,
+            'gsUri': martha_response['gsUri']
         }
         return manifest_entry
 
@@ -201,18 +201,8 @@ class ManifestGenerator:
             fh.write(json.dumps(manifest_content, indent=4))
 
     def print_manifest(self, manifest_content: list) -> None:
-        """
-        Output the manifest for informational/diagnostic purposes,
-        with the Google service account key masked.
-        """
         print("Manifest Content:")
-        print("[")
-        for manifest_entry in manifest_content:
-            entry = manifest_entry.copy()
-            if entry.get('googleServiceAccount', None) is not None:
-                entry['googleServiceAccount'] = "MASKED"
-            print(json.dumps(entry, indent=4))
-        print("]")
+        print(json.dumps(manifest_content, indent=4))
 
     def create_manifest(self, manifest_filename: str, drs_uri_list: list):
         manifest_content = self.resolve_all_to_manifest_json(drs_uri_list)
