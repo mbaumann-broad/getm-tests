@@ -167,6 +167,7 @@ class ManifestGenerator:
         drs_uri_portion = drs_uri.replace("drs://","").replace(":","_").replace('/',"_")
         # TODO Temporary workaround for `getm` not currently creating subdirectories as needed
         subdir = f"/cromwell_root/{drs_uri_portion}"
+        # workflow cleans up files but not subdirectories; leave them if a repeated run
         if not os.path.exists(subdir):
             os.mkdir(f"/cromwell_root/{drs_uri_portion}")
         # End of workaround
