@@ -23,9 +23,11 @@ workflow drs {
                 downloader=downloader
         }
     }
+    call consolidate_outputs {
+        input: all_runs=download.timing_file
+    }
     output {
-        File getm_manifest = create_manifest.getm_manifest
-        Array[File] all_runs_stdout = download.stdout
+        File final_timing_totals = consolidate_outputs.final_timing_totals
     }
 }
 
@@ -68,9 +70,6 @@ task create_manifest {
         # Check that we're really using python3.8
         python --version
 
-        # Google project to bill for the gsutil downloads
-        GOOGLE_REQUESTER_PAYS_PROJECT=platform-dev-178517
-
         # Create a getm manifest for the DRS URIs
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         apt-get install -yq --no-install-recommends virtualenv python3.8-dev
@@ -91,7 +90,6 @@ task create_manifest {
     >>>
 
     output {
-        File stdout = stdout()
         File getm_manifest = getm_manifest_filename
     }
 
@@ -144,9 +142,6 @@ task download {
         df -h
 
         if [ "~{downloader}" = "getm" ]; then
-            # Google project to bill for the gsutil downloads
-            GOOGLE_REQUESTER_PAYS_PROJECT=platform-dev-178517
-
             apt-get install -yq --no-install-recommends virtualenv python3.8-dev
             apt-get -yq --no-install-recommends install python3-pip
             # Use a virtualenv
@@ -210,7 +205,7 @@ task download {
         # GSUTIL DOWNLOAD of the gs:// URIs in the manifest
         if [ "~{downloader}" = "gsutil" ]; then
             # Google project to bill for the gsutil downloads
-            GOOGLE_REQUESTER_PAYS_PROJECT=platform-dev-178517
+            GOOGLE_REQUESTER_PAYS_PROJECT=anvil-stage-demo
             apt-get install -y apt-transport-https ca-certificates gnupg
             echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
             curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
@@ -224,13 +219,76 @@ task download {
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
         fi
-
-        # Check final disk usage after downloading
-        df -h
+        echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
     >>>
 
     output {
-        File stdout = stdout()
+        File timing_file = "~{downloader}.txt"
+    }
+
+    runtime {
+        docker: "broadinstitute/cromwell-drs-localizer:61"
+        cpu: select_first([cpu, "4"])
+        memory: select_first([memory,"16"]) + " GB"
+        disks: "local-disk " + select_first([disk, "128"]) + " HDD"
+        bootDiskSizeGb: select_first([boot_disk,"30"])
+    }
+}
+
+task consolidate_outputs {
+    meta {
+        description: "Takes the timing outputs from all download runs and consolidates the times into one file."
+    }
+    parameter_meta {
+        all_runs: "Array of file paths to be consolidated"
+        cpu: "runtime parameter - number of CPUs "
+        memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
+        boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
+        disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
+    }
+    input {
+        Array[File] all_runs
+        Int? cpu
+        Int? memory
+        Int? boot_disk
+        Int? disk
+    }
+    command <<<
+        set -eux o pipefail
+
+        # Identify the runtime environment; check Linux version
+        cat /etc/issue
+        uname -a
+
+        # Commands that could be added to the Dockerfile
+        apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget virtualenv python3.8-dev
+        apt-get -yq --no-install-recommends install python3-pip
+
+        # use a virtualenv
+        virtualenv -p python3.8 v38nv
+        set +u
+        . v38nv/bin/activate
+        set -u
+        # Check that we're really using python3.8
+        python --version
+
+        # Create a getm manifest for the DRS URIs
+        wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
+        apt-get install -yq --no-install-recommends virtualenv python3.8-dev
+        apt-get -yq --no-install-recommends install python3-pip
+        # Use a virtualenv
+        virtualenv -p python3.8 v38nv
+        set +u
+        . v38nv/bin/activate
+        set -u
+        # Check that we're really using python3.8
+        python --version
+
+        python ./consolidate_files.py "~{sep='" "' all_runs}"
+    >>>
+
+    output {
+        File final_timing_totals = "final_timing_totals.txt"
     }
 
     runtime {
