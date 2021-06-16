@@ -59,7 +59,6 @@ task create_manifest {
         uname -a
 
         # Commands that could be added to the Dockerfile
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget python3.8-dev
         apt-get -yq --no-install-recommends install python3-pip
         # Check that we're really using python3.8
@@ -69,6 +68,7 @@ task create_manifest {
         python -m pip install --upgrade pip
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
     >>>
 
@@ -254,12 +254,12 @@ task consolidate_outputs {
         uname -a
 
         # Commands that could be added to the Dockerfile
-        wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
         apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget python3.8-dev
         apt-get -yq --no-install-recommends install python3-pip
         # Check that we're really using python3.8
         python --version
 
+        wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
 
