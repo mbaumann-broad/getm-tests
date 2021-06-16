@@ -222,11 +222,13 @@ task download {
 
         # CROMWELL LOCALIZER DOWNLOAD of the drs:// URIs in the manifest
         if [ "~{downloader}" = "cromwell_localizer" ]; then
+            # Google project to bill for the localizer downloads (which seems to call gsutil)
+            GOOGLE_REQUESTER_PAYS_PROJECT=anvil-stage-demo
             export MARTHA_URL=https://us-central1-broad-dsde-prod.cloudfunctions.net/martha_v3
             drs_uris=($(cat ~{manifest} | jq -r '.[] .drs_uri'))
             start_time=`date +%s`
             for drs_uri in ${drs_uris[@]}; do
-                java -jar /app/cromwell-drs-localizer.jar ${drs_uri} ${TMP_DL_DIR}
+                java -jar /app/cromwell-drs-localizer.jar ${drs_uri} ${TMP_DL_DIR} ${GOOGLE_REQUESTER_PAYS_PROJECT}
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
