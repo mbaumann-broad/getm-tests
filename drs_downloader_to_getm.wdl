@@ -59,26 +59,8 @@ task create_manifest {
         uname -a
 
         # Commands that could be added to the Dockerfile
-        apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget virtualenv python3.8-dev
+        apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget python3.8-dev
         apt-get -yq --no-install-recommends install python3-pip
-
-        # use a virtualenv
-        virtualenv -p python3.8 v38nv
-        set +u
-        . v38nv/bin/activate
-        set -u
-        # Check that we're really using python3.8
-        python --version
-
-        # Create a getm manifest for the DRS URIs
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
-        apt-get install -yq --no-install-recommends virtualenv python3.8-dev
-        apt-get -yq --no-install-recommends install python3-pip
-        # Use a virtualenv
-        virtualenv -p python3.8 v38nv
-        set +u
-        . v38nv/bin/activate
-        set -u
         # Check that we're really using python3.8
         python --version
 
@@ -86,6 +68,7 @@ task create_manifest {
         python -m pip install --upgrade pip
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
     >>>
 
@@ -142,13 +125,8 @@ task download {
         df -h
 
         if [ "~{downloader}" = "getm" ]; then
-            apt-get install -yq --no-install-recommends virtualenv python3.8-dev
+            apt-get install -yq --no-install-recommends python3.8-dev
             apt-get -yq --no-install-recommends install python3-pip
-            # Use a virtualenv
-            virtualenv -p python3.8 v38nv
-            set +u
-            . v38nv/bin/activate
-            set -u
             # Check that we're really using python3.8
             python --version
 
@@ -276,29 +254,12 @@ task consolidate_outputs {
         uname -a
 
         # Commands that could be added to the Dockerfile
-        apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget virtualenv python3.8-dev
+        apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget python3.8-dev
         apt-get -yq --no-install-recommends install python3-pip
-
-        # use a virtualenv
-        virtualenv -p python3.8 v38nv
-        set +u
-        . v38nv/bin/activate
-        set -u
         # Check that we're really using python3.8
         python --version
 
-        # Create a getm manifest for the DRS URIs
         wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
-        apt-get install -yq --no-install-recommends virtualenv python3.8-dev
-        apt-get -yq --no-install-recommends install python3-pip
-        # Use a virtualenv
-        virtualenv -p python3.8 v38nv
-        set +u
-        . v38nv/bin/activate
-        set -u
-        # Check that we're really using python3.8
-        python --version
-
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
 
