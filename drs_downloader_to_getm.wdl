@@ -16,7 +16,7 @@ workflow drs {
     call create_manifest {
         input: drs_uris=drs_uris
     }
-    scatter (downloader in ["getm", "curl", "wget", "gsutil"]) {
+    scatter (downloader in ["getm", "curl", "wget", "gsutil", "cromwell_localizer"]) {
         call download {
             input:
                 manifest=create_manifest.getm_manifest,
@@ -108,7 +108,7 @@ task download {
     }
     parameter_meta {
         manifest: "Manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
-        downloader: "The downloader to use: (getm, curl, wget, gsutil)"
+        downloader: "The downloader to use: (getm, curl, wget, gsutil, cromwell_localizer)"
         cpu: "runtime parameter - number of CPUs"
         memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
         boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
@@ -219,6 +219,19 @@ task download {
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
         fi
+
+        # CROMWELL LOCALIZER DOWNLOAD of the drs:// URIs in the manifest
+        if [ "~{downloader}" = "cromwell_localizer" ]; then
+            export MARTHA_URL=https://us-central1-broad-dsde-prod.cloudfunctions.net/martha_v3
+            drs_uris=($(cat ~{manifest} | jq -r '.[] .drs_uri'))
+            start_time=`date +%s`
+            for drs_uri in ${drs_uris[@]}; do
+                java -jar /app/cromwell-drs-localizer.jar ${drs_uri} ${TMP_DL_DIR}
+            done
+            end_time=`date +%s`
+            total_time="$(($end_time-$start_time))"
+        fi
+
         echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
     >>>
 
