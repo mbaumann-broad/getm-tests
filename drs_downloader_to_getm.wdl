@@ -256,6 +256,7 @@ task consolidate_outputs {
         # Commands that could be added to the Dockerfile
         apt-get update && apt-get install -yq --no-install-recommends apt-utils git jq wget python3.8-dev
         apt-get -yq --no-install-recommends install python3-pip
+        pip install terra-notebook-utils
         # Check that we're really using python3.8
         python --version
 
