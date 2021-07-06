@@ -169,7 +169,7 @@ class ManifestGenerator:
         subdir = f"/cromwell_root/{drs_uri_portion}"
         # workflow cleans up files but not subdirectories; leave them if a repeated run
         if not os.path.exists(subdir):
-            os.mkdir(f"/cromwell_root/{drs_uri_portion}")
+            os.makedirs(f"/cromwell_root/{drs_uri_portion}", exist_ok=True)
         # End of workaround
         return f"/cromwell_root/{drs_uri_portion}/{filename}"
 
