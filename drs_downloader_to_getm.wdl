@@ -26,8 +26,8 @@ workflow drs {
         }
     }
     call consolidate_outputs {
-        input: all_runs=download.timing_file
-        input: test_name=test_name
+        input: all_runs=download.timing_file,
+        test_name=test_name
     }
     output {
         File final_timing_totals = consolidate_outputs.final_timing_totals
