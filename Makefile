@@ -2,6 +2,7 @@ ifeq ($(shell which miniwdl),)
 $(error Please install requirements using "pip install -r requirements.txt")
 endif
 
+# MiniWDL uses shellcheck for improved WDL linting. This check can be removed if folks dislike it.
 ifeq ($(shell which shellcheck),)
 $(error Please install shellcheck using "apt-get install shellcheck" or "brew install shellcheck")
 endif
