@@ -6,10 +6,11 @@ from datetime import datetime
 from terra_notebook_utils import table
 
 
-usage = "Usage: consolidate_files.py file_1 file_2 ..."
-assert len(sys.argv) >= 2, usage
-file_list = sys.argv[1:]
-timing_data = dict(date=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"))
+usage = "Usage: consolidate_files.py test_name file_1 file_2 ..."
+assert len(sys.argv) >= 3, usage
+test_name = sys.argv[1]
+file_list = sys.argv[2:]
+timing_data = dict(test=test_name, date=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"))
 for input_file in file_list:
     if not os.path.exists(input_file):
         raise RuntimeError(f'{input_file} does not exist.  {usage}')

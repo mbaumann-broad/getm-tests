@@ -11,6 +11,7 @@ workflow drs {
     }
     input {
         Array[String] drs_uris
+        String test_name
     }
 
     call create_manifests {
@@ -26,6 +27,7 @@ workflow drs {
     }
     call consolidate_outputs {
         input: all_runs=download.timing_file
+        input: test_name=test_name
     }
     output {
         File final_timing_totals = consolidate_outputs.final_timing_totals
@@ -280,6 +282,7 @@ task consolidate_outputs {
     }
     input {
         Array[File] all_runs
+        String test_name
         Int? cpu
         Int? memory
         Int? boot_disk
@@ -300,7 +303,7 @@ task consolidate_outputs {
         python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
         python -m pip show terra-notebook-utils
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/xbrianh-test/scripts/consolidate_files.py
-        python ./consolidate_files.py "~{sep='" "' all_runs}"
+        python ./consolidate_files.py ~{test_name} "~{sep='" "' all_runs}"
     >>>
 
     output {
