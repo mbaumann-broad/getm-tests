@@ -72,8 +72,8 @@ task create_manifests {
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
         python -m pip show terra-notebook-utils
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_tnu_manifest.py
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/xbrianh-test/scripts/create_tnu_manifest.py
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/xbrianh-test/scripts/create_getm_manifest.py
         python ./create_tnu_manifest.py ~{tnu_manifest_filename} "~{sep='" "' drs_uris}"
         python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
     >>>
@@ -162,7 +162,7 @@ task download {
             done
         fi
 
-		# Download DRS URIs with TNU
+        # Download DRS URIs with TNU
         if [ "~{downloader}" = "tnu" ]; then
             apt-get install -yq --no-install-recommends python3.8-dev
             apt-get -yq --no-install-recommends install python3-pip
@@ -176,7 +176,7 @@ task download {
 
             # Download the files in the manifest
             start_time=`date +%s`
-			time tnu drs copy-batch --workspace "DRS Localization Testing" --workspace-namespace anvil-stage-demo --manifest ~{tnu_manifest}
+            time tnu drs copy-batch --workspace "DRS Localization Testing" --workspace-namespace anvil-stage-demo --manifest ~{tnu_manifest}
             tnu_exit_status=$?
             echo "Getm exit status: "$tnu_exit_status
             end_time=`date +%s`
@@ -299,7 +299,7 @@ task consolidate_outputs {
         python --version
         python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
         python -m pip show terra-notebook-utils
-        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/consolidate_files.py
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/xbrianh-test/scripts/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
 
