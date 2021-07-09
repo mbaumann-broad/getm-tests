@@ -200,8 +200,7 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{getm_manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
-                wget ${signed_url} -P ${TMP_DL_DIR}/
+                wget ${signed_url} -O ${TMP_DL_DIR}/$(python -c 'import uuid; print(uuid.uuid4())')
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
@@ -209,12 +208,10 @@ task download {
 
         # CURL DOWNLOAD of the signed URLs in the manifest
         if [ "~{downloader}" = "curl" ]; then
-            cd ${TMP_DL_DIR}
             start_time=`date +%s`
             signed_urls=($(cat ~{getm_manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
-                curl ${signed_url} -P ${TMP_DL_DIR}/
+                curl ${signed_url} -o ${TMP_DL_DIR}/$(python -c 'import uuid; print(uuid.uuid4())')
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
