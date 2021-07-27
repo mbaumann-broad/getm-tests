@@ -2,7 +2,7 @@ version 1.0
 
 workflow drs {
     meta {
-        description: "This workflow tests downloading DRS URIs using different downloaders (getm, curl, wget, gsutil)."
+        description: "This workflow tests downloading DRS URIs using different downloaders (getm, curl, wget, gsutil, cromwell_localizer)."
         tags: "DRS"
         author: "M. Baumann"
     }
@@ -12,14 +12,10 @@ workflow drs {
     input {
         Array[String] drs_uris
     }
-
-    call create_manifest {
-        input: drs_uris=drs_uris
-    }
     scatter (downloader in ["getm", "curl", "wget", "gsutil", "cromwell_localizer"]) {
         call download {
             input:
-                manifest=create_manifest.getm_manifest,
+                drs_uris=drs_uris,
                 downloader=downloader
         }
     }
@@ -31,28 +27,31 @@ workflow drs {
     }
 }
 
-task create_manifest {
+task download {
     meta {
-        description: "Creates a manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
+        description: "This task tests downloading DRS URIs using the downloader of your choice (getm, curl, wget, gsutil, cromwell_localizer)."
     }
     parameter_meta {
         drs_uris: "Array of DRS URIs to be downloaded"
-        cpu: "runtime parameter - number of CPUs "
+        downloader: "The downloader to use: (getm, curl, wget, gsutil, cromwell_localizer)"
+        cpu: "runtime parameter - number of CPUs"
         memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
         boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
         disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
     }
     input {
         Array[String] drs_uris
+        String downloader
         Int? cpu
         Int? memory
         Int? boot_disk
         Int? disk
-
-        String getm_manifest_filename = "./manifest.json"
+        String manifest = "./manifest.json"
     }
     command <<<
         set -eux o pipefail
+
+        CURRENT_DIR=$(pwd)
 
         # Identify the runtime environment; check Linux version
         cat /etc/issue
@@ -69,56 +68,11 @@ task create_manifest {
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
-        python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
-    >>>
-
-    output {
-        File getm_manifest = getm_manifest_filename
-    }
-
-    runtime {
-        docker: "broadinstitute/cromwell-drs-localizer:61"
-        cpu: select_first([cpu, "4"])
-        memory: select_first([memory,"16"]) + " GB"
-        disks: "local-disk " + select_first([disk, "128"]) + " HDD"
-        bootDiskSizeGb: select_first([boot_disk,"30"])
-    }
-}
-
-task download {
-    meta {
-        description: "This task tests downloading DRS URIs using the downloader of your choice (getm, curl, wget, gsutil)."
-    }
-    parameter_meta {
-        manifest: "Manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
-        downloader: "The downloader to use: (getm, curl, wget, gsutil, cromwell_localizer)"
-        cpu: "runtime parameter - number of CPUs"
-        memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
-        boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
-        disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
-    }
-    input {
-        File manifest
-        String downloader
-        Int? cpu
-        Int? memory
-        Int? boot_disk
-        Int? disk
-    }
-    command <<<
-        set -eux o pipefail
-
-        CURRENT_DIR=$(pwd)
+        python ./create_getm_manifest.py ~{manifest} "~{sep='" "' drs_uris}"
 
         # Where all non-getm downloads go (wget, gsutil, and curl)
         TMP_DL_DIR=/cromwell_root/speedtest3crdws3s
         mkdir -p ${TMP_DL_DIR}
-
-        # Identify the runtime environment; Check Linux version
-        cat /etc/issue
-        uname -a
-        apt-get update
-        apt-get install -yq --no-install-recommends apt-utils git jq
 
         # Check available shared memory and disk usage before downloading
         # TODO Configure shared memory appropriately, if needed.
