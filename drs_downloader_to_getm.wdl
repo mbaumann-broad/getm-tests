@@ -188,8 +188,8 @@ task download {
         table.put_row(downloader_name, timing_data, workspace="DRS Localization Testing", workspace_namespace="anvil-stage-demo")
         EOF
 
-        chmod 755 upload_data_table_point.py.py
-        ./upload_data_table_point.py.py
+        chmod 755 upload_data_table_point.py
+        ./upload_data_table_point.py
     >>>
 
     output {
