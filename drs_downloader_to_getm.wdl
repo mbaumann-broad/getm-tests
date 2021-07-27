@@ -67,6 +67,9 @@ task download {
         python -m pip install --upgrade pip
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
+        # Install TNU
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+        python -m pip show terra-notebook-utils
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         python ./create_getm_manifest.py ~{manifest} "~{sep='" "' drs_uris}"
 
@@ -167,6 +170,26 @@ task download {
         fi
 
         echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
+
+        cat << EOF > upload_data_table_point.py
+        #!/usr/bin/python
+        import os
+        import sys
+        import json
+        from datetime import datetime
+
+        from terra_notebook_utils import table
+
+        timing_data = dict(date=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"))
+        with open("~{downloader}.txt", 'r') as fh:
+            downloader_name, duration_seconds, _ = fh.read().split()
+            timing_data[downloader_name] = duration_seconds
+
+        table.put_row(downloader_name, timing_data, workspace="DRS Localization Testing", workspace_namespace="anvil-stage-demo")
+        EOF
+
+        chmod 755 upload_data_table_point.py.py
+        ./upload_data_table_point.py.py
     >>>
 
     output {
