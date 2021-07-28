@@ -151,6 +151,7 @@ task download {
                 echo ${downloaded_file}
                 ls -lha ${downloaded_file}
             done
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
 
         # WGET DOWNLOAD of the signed URLs in the manifest
@@ -159,11 +160,19 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
-                wget ${signed_url} -P ${TMP_DL_DIR}/
+                wget ${signed_url} --output-document=${TMP_DL_DIR}/$(basename $signed_url)
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+
+            # time just the md5sums
+            for signed_url in ${signed_urls[@]}; do
+                md5sum ${TMP_DL_DIR}/$(basename $signed_url)
+            done
+            end_time=`date +%s`
+            total_time_incl_md5="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
+            echo "~{downloader}+md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
         fi
 
         # CURL DOWNLOAD of the signed URLs in the manifest
@@ -172,11 +181,19 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
-                curl ${signed_url} -P ${TMP_DL_DIR}/
+                curl ${signed_url} -o ${TMP_DL_DIR}/$(basename $signed_url)
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+
+            # time just the md5sums
+            for signed_url in ${signed_urls[@]}; do
+                md5sum ${TMP_DL_DIR}/$(basename $signed_url)
+            done
+            end_time=`date +%s`
+            total_time_incl_md5="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
+            echo "~{downloader}+md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
             cd ${CURRENT_DIR}
         fi
 
@@ -196,6 +213,7 @@ task download {
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
 
         # CROMWELL LOCALIZER DOWNLOAD of the drs:// URIs in the manifest
@@ -210,9 +228,8 @@ task download {
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
-
-        echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
     >>>
 
     output {
