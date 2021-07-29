@@ -231,6 +231,7 @@ task download {
                 echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
             fi
         )
+        # if the output file was not created due to some error above, create a record of the error with a stub file and -1 seconds:
         if [ ! -f "~{downloader}.txt" ]; then
             echo "~{downloader} -1 seconds" > "~{downloader}.txt"
         fi
