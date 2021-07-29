@@ -160,6 +160,7 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
+                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 wget ${signed_url} -P ${TMP_DL_DIR}/
             done
             end_time=`date +%s`
@@ -179,6 +180,7 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
+                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 curl ${signed_url} -P ${TMP_DL_DIR}/
             done
             end_time=`date +%s`
