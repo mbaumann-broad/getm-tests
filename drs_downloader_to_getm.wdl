@@ -234,7 +234,6 @@ task download {
         if [ ! -f "~{downloader}.txt" ]; then
             echo "~{downloader} -1 seconds" > "~{downloader}.txt"
         fi
-    >>>
 
     output {
         File timing_file = "~{downloader}.txt"
@@ -279,6 +278,11 @@ task consolidate_outputs {
         apt-get -yq --no-install-recommends install python3-pip
         # Check that we're really using python3.8
         python --version
+
+        # Install tnu
+        python -m pip install --upgrade pip
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+        python -m pip show terra-notebook-utils
 
         wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
