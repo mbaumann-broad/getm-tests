@@ -291,7 +291,7 @@ task consolidate_outputs {
     >>>
 
     output {
-        File final_timing_totals = "final_timing_totals.txt"
+        File final_timing_totals = "final_timing_totals.json"
     }
 
     runtime {
