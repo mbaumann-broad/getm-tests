@@ -166,13 +166,11 @@ task download {
             total_time="$(($end_time-$start_time))"
 
             # time just the md5sums
-            for signed_url in ${signed_urls[@]}; do
-                md5sum ${TMP_DL_DIR}/$(basename $signed_url)
-            done
+            md5sum ${TMP_DL_DIR}/*
             end_time=`date +%s`
             total_time_incl_md5="$(($end_time-$start_time))"
             echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
-            echo "~{downloader}+md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
+            echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
         fi
 
         # CURL DOWNLOAD of the signed URLs in the manifest
@@ -187,13 +185,11 @@ task download {
             total_time="$(($end_time-$start_time))"
 
             # time just the md5sums
-            for signed_url in ${signed_urls[@]}; do
-                md5sum ${TMP_DL_DIR}/$(basename $signed_url)
-            done
+            md5sum ${TMP_DL_DIR}/*
             end_time=`date +%s`
             total_time_incl_md5="$(($end_time-$start_time))"
             echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
-            echo "~{downloader}+md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
+            echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
             cd ${CURRENT_DIR}
         fi
 
