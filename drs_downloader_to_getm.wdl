@@ -272,6 +272,11 @@ task consolidate_outputs {
         # Check that we're really using python3.8
         python --version
 
+        # Install tnu
+        python -m pip install --upgrade pip
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+        python -m pip show terra-notebook-utils
+
         wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
