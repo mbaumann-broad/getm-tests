@@ -183,7 +183,7 @@ task download {
                 start_time=`date +%s`
                 signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
                 for signed_url in ${signed_urls[@]}; do
-                    curl ${signed_url} -P ${TMP_DL_DIR}/
+                    curl ${signed_url} --output ${TMP_DL_DIR}/${RANDOM}
                 done
                 end_time=`date +%s`
                 total_time="$(($end_time-$start_time))"
