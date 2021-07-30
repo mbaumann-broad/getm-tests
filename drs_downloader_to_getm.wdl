@@ -112,8 +112,6 @@ task download {
             # this is a sort of rudimentary error handling, so that "~{downloader}.txt" is always produced
             set -eux o pipefail
 
-            CURRENT_DIR=$(pwd)
-
             # Where all non-getm downloads go (wget, gsutil, and curl)
             TMP_DL_DIR=/cromwell_root/speedtest3crdws3s
             mkdir -p ${TMP_DL_DIR}
@@ -179,7 +177,6 @@ task download {
 
             # CURL DOWNLOAD of the signed URLs in the manifest
             if [ "~{downloader}" = "curl" ]; then
-                cd ${TMP_DL_DIR}
                 start_time=`date +%s`
                 signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
                 for signed_url in ${signed_urls[@]}; do
@@ -194,7 +191,6 @@ task download {
                 total_time_incl_md5="$(($end_time-$start_time))"
                 echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
                 echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
-                cd ${CURRENT_DIR}
             fi
 
             # GSUTIL DOWNLOAD of the gs:// URIs in the manifest
