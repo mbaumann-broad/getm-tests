@@ -108,8 +108,6 @@ task download {
     command <<<
         set -eux o pipefail
 
-        CURRENT_DIR=$(pwd)
-
         # Where all non-getm downloads go (wget, gsutil, and curl)
         TMP_DL_DIR=/cromwell_root/speedtest3crdws3s
         mkdir -p ${TMP_DL_DIR}
@@ -160,7 +158,6 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 wget ${signed_url} -P ${TMP_DL_DIR}/
             done
             end_time=`date +%s`
@@ -176,11 +173,9 @@ task download {
 
         # CURL DOWNLOAD of the signed URLs in the manifest
         if [ "~{downloader}" = "curl" ]; then
-            cd ${TMP_DL_DIR}
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 curl ${signed_url} --output ${TMP_DL_DIR}/${RANDOM}
             done
             end_time=`date +%s`
@@ -192,7 +187,6 @@ task download {
             total_time_incl_md5="$(($end_time-$start_time))"
             echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
             echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
-            cd ${CURRENT_DIR}
         fi
 
         # GSUTIL DOWNLOAD of the gs:// URIs in the manifest
