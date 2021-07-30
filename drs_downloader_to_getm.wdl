@@ -164,7 +164,7 @@ task download {
                 start_time=`date +%s`
                 signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
                 for signed_url in ${signed_urls[@]}; do
-                    wget ${signed_url} --output-document=${TMP_DL_DIR}/$(basename $signed_url)
+                    wget ${signed_url} -P ${TMP_DL_DIR}/
                 done
                 end_time=`date +%s`
                 total_time="$(($end_time-$start_time))"
@@ -183,7 +183,7 @@ task download {
                 start_time=`date +%s`
                 signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
                 for signed_url in ${signed_urls[@]}; do
-                    curl ${signed_url} -o ${TMP_DL_DIR}/$(basename $signed_url)
+                    curl ${signed_url} -P ${TMP_DL_DIR}/
                 done
                 end_time=`date +%s`
                 total_time="$(($end_time-$start_time))"

@@ -9,7 +9,8 @@ from terra_notebook_utils import table
 usage = "Usage: consolidate_files.py file_1 file_2 ..."
 assert len(sys.argv) >= 2, usage
 file_list = sys.argv[1:]
-timing_data = dict(date=datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ"))
+# "0_data" displays this as the first column, since data tables in the browser show columns alphabetically
+timing_data = {'0_date': datetime.utcnow().strftime("%Y-%m-%dT%H%M%S.%fZ")}
 for input_file in file_list:
     if not os.path.exists(input_file):
         raise RuntimeError(f'{input_file} does not exist.  {usage}')
@@ -26,7 +27,6 @@ for input_file in file_list:
         except:
             print(f'File contents ({input_file}): {fh.read()}')
             raise
-
 
 
 table.put_row("results", timing_data, workspace="DRS Localization Testing", workspace_namespace="anvil-stage-demo")
