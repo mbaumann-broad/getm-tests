@@ -231,6 +231,7 @@ task download {
         if [ ! -f "~{downloader}.txt" ]; then
             echo "~{downloader} -1 seconds" > "~{downloader}.txt"
         fi
+    >>>
 
     output {
         File timing_file = "~{downloader}.txt"
