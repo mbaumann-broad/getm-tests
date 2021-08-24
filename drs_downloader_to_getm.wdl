@@ -108,8 +108,6 @@ task download {
     command <<<
         set -eux o pipefail
 
-        CURRENT_DIR=$(pwd)
-
         # Where all non-getm downloads go (wget, gsutil, and curl)
         TMP_DL_DIR=/cromwell_root/speedtest3crdws3s
         mkdir -p ${TMP_DL_DIR}
@@ -151,6 +149,7 @@ task download {
                 echo ${downloaded_file}
                 ls -lha ${downloaded_file}
             done
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
 
         # WGET DOWNLOAD of the signed URLs in the manifest
@@ -159,25 +158,35 @@ task download {
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 wget ${signed_url} -P ${TMP_DL_DIR}/
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+
+            # time just the md5sums
+            md5sum ${TMP_DL_DIR}/*
+            end_time=`date +%s`
+            total_time_incl_md5="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
+            echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
         fi
 
         # CURL DOWNLOAD of the signed URLs in the manifest
         if [ "~{downloader}" = "curl" ]; then
-            cd ${TMP_DL_DIR}
             start_time=`date +%s`
             signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
-                # this is going to create some crazy truncated names but it shouldn't make a difference in run times
-                curl ${signed_url} -P ${TMP_DL_DIR}/
+                curl ${signed_url} --output ${TMP_DL_DIR}/${RANDOM}
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
-            cd ${CURRENT_DIR}
+
+            # time just the md5sums
+            md5sum ${TMP_DL_DIR}/*
+            end_time=`date +%s`
+            total_time_incl_md5="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
+            echo "~{downloader}_md5sum ${total_time_incl_md5} seconds" >> "~{downloader}.txt"
         fi
 
         # GSUTIL DOWNLOAD of the gs:// URIs in the manifest
@@ -196,6 +205,7 @@ task download {
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
 
         # CROMWELL LOCALIZER DOWNLOAD of the drs:// URIs in the manifest
@@ -210,9 +220,8 @@ task download {
             done
             end_time=`date +%s`
             total_time="$(($end_time-$start_time))"
+            echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
         fi
-
-        echo "~{downloader} ${total_time} seconds" > "~{downloader}.txt"
     >>>
 
     output {
@@ -259,12 +268,17 @@ task consolidate_outputs {
         # Check that we're really using python3.8
         python --version
 
+        # Install tnu
+        python -m pip install --upgrade pip
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+        python -m pip show terra-notebook-utils
+
         wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
 
     output {
-        File final_timing_totals = "final_timing_totals.txt"
+        File final_timing_totals = "final_timing_totals.json"
     }
 
     runtime {
