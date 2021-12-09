@@ -2,7 +2,7 @@ version 1.0
 
 workflow drs {
     meta {
-        description: "This workflow tests downloading DRS URIs using different downloaders (getm, curl, wget, gsutil)."
+        description: "This workflow tests downloading DRS URIs using different downloaders (getm, tnu, curl, wget, gsutil)."
         tags: "DRS"
         author: "M. Baumann"
     }
@@ -13,13 +13,14 @@ workflow drs {
         Array[String] drs_uris
     }
 
-    call create_manifest {
+    call create_manifests {
         input: drs_uris=drs_uris
     }
-    scatter (downloader in ["getm", "curl", "wget", "gsutil", "cromwell_localizer"]) {
+    scatter (downloader in ["getm", "tnu", "curl", "wget", "gsutil", "cromwell_localizer"]) {
         call download {
             input:
-                manifest=create_manifest.getm_manifest,
+                getm_manifest=create_manifests.getm_manifest,
+                tnu_manifest=create_manifests.tnu_manifest,
                 downloader=downloader
         }
     }
@@ -31,9 +32,9 @@ workflow drs {
     }
 }
 
-task create_manifest {
+task create_manifests {
     meta {
-        description: "Creates a manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
+        description: "Create manifests mapping DRS URIs to http/gs/s3/drs schema appropriate for use with getm and tnu."
     }
     parameter_meta {
         drs_uris: "Array of DRS URIs to be downloaded"
@@ -49,7 +50,8 @@ task create_manifest {
         Int? boot_disk
         Int? disk
 
-        String getm_manifest_filename = "./manifest.json"
+        String getm_manifest_filename = "./getm_manifest.json"
+        String tnu_manifest_filename = "./tnu_manifest.json"
     }
     command <<<
         set -eux o pipefail
@@ -66,13 +68,18 @@ task create_manifest {
 
         # Install getm
         python -m pip install --upgrade pip
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
         python -m pip install git+https://github.com/xbrianh/getm
         python -m pip show getm
+        python -m pip show terra-notebook-utils
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_tnu_manifest.py
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
+        python ./create_tnu_manifest.py ~{tnu_manifest_filename} "~{sep='" "' drs_uris}"
         python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
     >>>
 
     output {
+        File tnu_manifest = tnu_manifest_filename
         File getm_manifest = getm_manifest_filename
     }
 
@@ -90,7 +97,8 @@ task download {
         description: "This task tests downloading DRS URIs using the downloader of your choice (getm, curl, wget, gsutil)."
     }
     parameter_meta {
-        manifest: "Manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
+        getm_manifest: "Manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with getm."
+        tnu_manifest: "Manifest mapping DRS URIs to http/gs/s3 schema appropriate for use with tnu."
         downloader: "The downloader to use: (getm, curl, wget, gsutil, cromwell_localizer)"
         cpu: "runtime parameter - number of CPUs"
         memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
@@ -98,7 +106,8 @@ task download {
         disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
     }
     input {
-        File manifest
+        File getm_manifest
+        File tnu_manifest
         String downloader
         Int? cpu
         Int? memory
@@ -137,7 +146,7 @@ task download {
 
             # Download the files in the manifest
             start_time=`date +%s`
-            time getm -c -v --manifest ~{manifest}
+            time getm -c -v --manifest ~{getm_manifest}
             getm_exit_status=$?
             echo "Getm exit status: "$getm_exit_status
             end_time=`date +%s`
@@ -146,7 +155,37 @@ task download {
             df -h
 
             # verify that the downloaded filepaths exist
-            downloaded_files=($(cat ~{manifest} | jq -r '.[] .filepath'))
+            downloaded_files=($(cat ~{getm_manifest} | jq -r '.[] .filepath'))
+            for downloaded_file in ${downloaded_files[@]}; do
+                echo ${downloaded_file}
+                ls -lha ${downloaded_file}
+            done
+        fi
+
+		# Download DRS URIs with TNU
+        if [ "~{downloader}" = "tnu" ]; then
+            apt-get install -yq --no-install-recommends python3.8-dev
+            apt-get -yq --no-install-recommends install python3-pip
+            # Check that we're really using python3.8
+            python --version
+
+            # Install tnu
+            python -m pip install --upgrade pip
+            python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+            python -m pip show terra-notebook-utils
+
+            # Download the files in the manifest
+            start_time=`date +%s`
+			time tnu drs copy-batch --workspace "DRS Localization Testing" --workspace-namespace anvil-stage-demo --manifest ~{tnu_manifest}
+            tnu_exit_status=$?
+            echo "Getm exit status: "$tnu_exit_status
+            end_time=`date +%s`
+            total_time="$(($end_time-$start_time))"
+            # Check final disk usage after downloading
+            df -h
+
+            # verify that the downloaded filepaths exist
+            downloaded_files=($(cat ~{tnu_manifest} | jq -r '.[] .dst'))
             for downloaded_file in ${downloaded_files[@]}; do
                 echo ${downloaded_file}
                 ls -lha ${downloaded_file}
@@ -157,7 +196,7 @@ task download {
         if [ "~{downloader}" = "wget" ]; then
             apt-get install -yq --no-install-recommends wget
             start_time=`date +%s`
-            signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
+            signed_urls=($(cat ~{getm_manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
                 # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 wget ${signed_url} -P ${TMP_DL_DIR}/
@@ -170,7 +209,7 @@ task download {
         if [ "~{downloader}" = "curl" ]; then
             cd ${TMP_DL_DIR}
             start_time=`date +%s`
-            signed_urls=($(cat ~{manifest} | jq -r '.[] .url'))
+            signed_urls=($(cat ~{getm_manifest} | jq -r '.[] .url'))
             for signed_url in ${signed_urls[@]}; do
                 # this is going to create some crazy truncated names but it shouldn't make a difference in run times
                 curl ${signed_url} -P ${TMP_DL_DIR}/
@@ -190,7 +229,7 @@ task download {
             apt-get update -y && apt-get install -y google-cloud-sdk
 
             start_time=`date +%s`
-            google_uris=($(cat ~{manifest} | jq -r '.[] .gs_uri'))
+            google_uris=($(cat ~{getm_manifest} | jq -r '.[] .gs_uri'))
             for google_uri in ${google_uris[@]}; do
                 gsutil -u ${GOOGLE_REQUESTER_PAYS_PROJECT} cp ${google_uri} ${TMP_DL_DIR}/
             done
@@ -203,7 +242,7 @@ task download {
             # Google project to bill for the localizer downloads (which seems to call gsutil)
             GOOGLE_REQUESTER_PAYS_PROJECT=anvil-stage-demo
             export MARTHA_URL=https://us-central1-broad-dsde-prod.cloudfunctions.net/martha_v3
-            drs_uris=($(cat ~{manifest} | jq -r '.[] .drs_uri'))
+            drs_uris=($(cat ~{getm_manifest} | jq -r '.[] .drs_uri'))
             start_time=`date +%s`
             for drs_uri in ${drs_uris[@]}; do
                 java -jar /app/cromwell-drs-localizer.jar ${drs_uri} ${TMP_DL_DIR} ${GOOGLE_REQUESTER_PAYS_PROJECT}
