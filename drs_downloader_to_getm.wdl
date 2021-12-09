@@ -297,13 +297,14 @@ task consolidate_outputs {
         apt-get -yq --no-install-recommends install python3-pip
         # Check that we're really using python3.8
         python --version
-
-        wget https://raw.githubusercontent.com/DailyDreaming/test/master/consolidate_files.py
+        python -m pip install git+https://github.com/DataBiosphere/terra-notebook-utils.git
+        python -m pip show terra-notebook-utils
+        wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/consolidate_files.py
         python ./consolidate_files.py "~{sep='" "' all_runs}"
     >>>
 
     output {
-        File final_timing_totals = "final_timing_totals.txt"
+        File final_timing_totals = "final_timing_totals.json"
     }
 
     runtime {
