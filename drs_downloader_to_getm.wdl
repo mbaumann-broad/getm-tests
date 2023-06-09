@@ -16,7 +16,7 @@ workflow drs {
     call create_manifest {
         input: drs_uris=drs_uris
     }
-    scatter (downloader in ["getm", "curl", "wget", "gsutil", "cromwell_localizer"]) {
+    scatter (downloader in ["getm_serial", "getm_parallel", "curl", "wget", "gsutil", "cromwell_localizer"]) {
         call download {
             input:
                 manifest=create_manifest.getm_manifest,
@@ -123,7 +123,9 @@ task download {
             # TODO Configure shared memory appropriately, if needed.
             df -h
 
-            if [ "~{downloader}" = "getm" ]; then
+            if [ "~{downloader}" = "getm" \
+                 -o "~{downloader}" = "getm_serial" \
+                 -o "~{downloader}" = "getm_parallel" ]; then
                 apt-get install -yq --no-install-recommends python3.8-dev
                 apt-get -yq --no-install-recommends install python3-pip
                 # Check that we're really using python3.8
@@ -136,7 +138,14 @@ task download {
 
                 # Download the files in the manifest
                 start_time=`date +%s`
-                time getm -c -v --manifest ~{manifest}
+
+                # Getm defaults to concurrency equal to the number of CPUs .
+                # To force serial downloading, set concurrency to 1.
+                concurrency=""
+                if [ "~{downloader}" = "getm_serial" ]; then
+                    concurrency="--concurrency 1"
+                fi
+                time getm -c -v ${concurrency} --manifest ~{manifest}
                 getm_exit_status=$?
                 echo "Getm exit status: "$getm_exit_status
                 end_time=`date +%s`
