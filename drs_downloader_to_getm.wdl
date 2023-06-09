@@ -77,7 +77,7 @@ task create_manifest {
     }
 
     runtime {
-        docker: "broadinstitute/cromwell-drs-localizer:61"
+        docker: "broadinstitute/cromwell-drs-localizer:85"
         cpu: select_first([cpu, "4"])
         memory: select_first([memory,"16"]) + " GB"
         disks: "local-disk " + select_first([disk, "128"]) + " HDD"
@@ -238,7 +238,7 @@ task download {
     }
 
     runtime {
-        docker: "broadinstitute/cromwell-drs-localizer:61"
+        docker: "broadinstitute/cromwell-drs-localizer:85"
         cpu: select_first([cpu, "4"])
         memory: select_first([memory,"16"]) + " GB"
         disks: "local-disk " + select_first([disk, "128"]) + " HDD"
@@ -291,7 +291,7 @@ task consolidate_outputs {
     }
 
     runtime {
-        docker: "broadinstitute/cromwell-drs-localizer:61"
+        docker: "broadinstitute/cromwell-drs-localizer:85"
         cpu: select_first([cpu, "4"])
         memory: select_first([memory,"16"]) + " GB"
         disks: "local-disk " + select_first([disk, "128"]) + " HDD"
