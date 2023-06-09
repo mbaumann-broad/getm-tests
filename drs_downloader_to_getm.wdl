@@ -64,10 +64,7 @@ task create_manifest {
         # Check that we're really using python3.8
         python --version
 
-        # Install getm
-        python -m pip install --upgrade pip
-        python -m pip install git+https://github.com/xbrianh/getm
-        python -m pip show getm
+        # Create the manifest
         wget https://raw.githubusercontent.com/mbaumann-broad/getm-tests/dev/scripts/create_getm_manifest.py
         python ./create_getm_manifest.py ~{getm_manifest_filename} "~{sep='" "' drs_uris}"
     >>>
@@ -134,7 +131,7 @@ task download {
 
                 # Install getm
                 python -m pip install --upgrade pip
-                python -m pip install git+https://github.com/xbrianh/getm
+                python -m pip install git+https://github.com/DataBiosphere/getm
                 python -m pip show getm
 
                 # Download the files in the manifest
